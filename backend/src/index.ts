@@ -1,5 +1,6 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
+import axios from "axios";
 
 const typeDefs = `#graphql
   type Book {
@@ -7,8 +8,17 @@ const typeDefs = `#graphql
     author: String
   }
 
+type User {
+  id: String
+  name: String
+  username: String
+  email: String
+  phone: String
+  website: String
+}
   type Query {
     books: [Book]
+    getUser(id: String): User
   }
 `;
 const books = [
@@ -25,8 +35,26 @@ const books = [
 const resolvers = {
   Query: {
     books: () => books,
+    getUser: async (_: any, { id }: { id: number }) => {
+      try {
+        const response = await axios.get(
+          `https://jsonplaceholder.typicode.com/users/${id}`
+        );
+        const user = response.data;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        };
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération de l'utilisateur :",
+          error
+        );
+        throw new Error("Erreur lors de la récupération de l'utilisateur.");
+      }
+    },
   },
-  
 };
 
 const server = new ApolloServer({
